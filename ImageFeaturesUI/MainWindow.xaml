@@ -1,0 +1,601 @@
+﻿<Window
+    Height="500" Width="700"
+    x:Class="ImageFeaturesUI.MainWindow"
+    x:ClassModifier="internal"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+    xmlns:local="clr-namespace:ImageFeaturesUI"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    PreviewMouseMove="HandlePreviewMouseMove"
+    WindowStyle="None" Icon="/ImageFeaturesUI;component/Images/image.png">
+    
+    <Grid x:Name="windowGrid">
+        <Grid OpacityMask="Black">
+            <Rectangle
+                Height="28"
+                VerticalAlignment="Top" PreviewMouseDown="HandleHeaderPreviewMouseDown">
+                <Rectangle.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="White" Offset="0" />
+                        <GradientStop Color="#FFD3D7DB" Offset="1.5" />
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+            
+            <!-- Minimization, etc. buttons -->
+            <Button
+                ToolTip="Minimize window"
+                HorizontalAlignment="Right"
+                Margin="200, 6, 45, 0"
+                VerticalAlignment="Top"
+                Style="{StaticResource ChromeButtonStyle}"
+                Click="HandleMinimizeClick">
+                <TextBlock
+                    Text="0"
+                    FontFamily="Webdings"
+                    Foreground="#FF919191"
+                    FontSize="13.333" />
+            </Button>
+            <Button
+                ToolTip="Maximize window"
+                HorizontalAlignment="Right"
+                Margin="200, 6, 26, 0"
+                VerticalAlignment="Top"
+                Style="{StaticResource ChromeButtonStyle}"
+                Click="HandleRestoreClick">
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Text="1"
+                    FontFamily="Webdings"
+                    Foreground="#FF919191"
+                    FontSize="13.333" />
+            </Button>
+            <Button
+                ToolTip="Close window"
+                HorizontalAlignment="Right"
+                Margin="200, 6, 8, 0"
+                VerticalAlignment="Top"
+                Style="{StaticResource ChromeButtonStyle}"
+                Click="HandleCloseClick">
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Text="r"
+                    FontFamily="Webdings"
+                    Foreground="#FF919191"
+                    FontSize="13.333" />
+            </Button>
+            <Grid.Background>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="White" Offset="0" />
+                    <GradientStop Color="#FFA2AEB7" Offset="1.5" />
+                </LinearGradientBrush>
+            </Grid.Background>
+        </Grid>
+        <Grid 
+            x:Name="m_frameGrid"
+            x:FieldModifier="private">
+            <Grid Margin="0,28,0,0" ShowGridLines="False">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Grid.DataContext>
+                    <XmlDataProvider x:Name="imagesXml" XPath="images/image">
+                        <x:XData>
+                            <images xmlns="">
+                                <!--<image>
+                                    <path>d:\fiiBuilding.png</path>
+                                    <predictions conceptsDir="d:\" state="Processed">
+                                        <prediction concept="timeofday_day" rank="1">
+                                            <probability>0.684415</probability>
+                                            <binary>true</binary>
+                                        </prediction>
+                                        <prediction concept="view_outdoor" rank="2">
+                                            <probability>0.682141</probability>
+                                            <binary>true</binary>
+                                        </prediction>
+                                        <prediction concept="weather_clearsky" rank="3">
+                                            <probability>0.6443269</probability>
+                                            <binary>true</binary>
+                                        </prediction>
+                                        <prediction concept="scape_city" rank="4">
+                                            <probability>0.589999</probability>
+                                            <binary>true</binary>
+                                        </prediction>
+                                        <prediction concept="sentiment_inactive" rank="5">
+                                            <probability>0.412453</probability>
+                                            <binary>false</binary>
+                                        </prediction>
+                                    </predictions>
+                                    
+                                </image>-->
+                            </images>
+                        </x:XData>
+                    </XmlDataProvider>
+                </Grid.DataContext>
+                
+
+                <!-- DockPanel for list of songs -->
+                <!--HorizontalAlignment="Center"-->
+
+                <TabControl x:Name="tabControl" TabStripPlacement="Bottom" Background="Transparent">
+                    <TabControl.Resources>
+                        <local:UriImageConverter x:Key="uriImageConverter"/>
+                        
+                        <DataTemplate x:Key="imageItemTemplate">
+                            <Border BorderThickness="0" CornerRadius="4" BorderBrush="RoyalBlue" Padding="0" Name="listBorder" Margin="3">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+
+                                    <Image Grid.RowSpan="2" Source="{Binding XPath=path}" Width="70" Height="70" Margin="5" />
+                                    <TextBlock Grid.Column="1" Grid.Row="0" Margin="10" 
+                                               Style="{StaticResource imageTitleListBoxStyle}" 
+                                               Text="{Binding XPath=displaypath}" />
+                                    <TextBlock x:Name="processedTextBlock" Grid.Column="1" Grid.Row="1" Margin="10" 
+                                               Style="{StaticResource imageTextListBoxStyle}" 
+                                               Text="{Binding XPath=predictions/@state}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                        
+                        <DataTemplate x:Key="predictionItemTemplate" >
+                            <Border BorderThickness="0" CornerRadius="4" BorderBrush="RoyalBlue" Padding="0" Name="listBorder" Margin="3">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Data templates for listbox items -->
+                                    <Image x:Name="conceptImage" Grid.Row="0" Grid.Column="0" Grid.RowSpan="4" Width="70" Height="70" Margin="5">
+                                        <Image.Source>
+                                            <MultiBinding Converter="{StaticResource uriImageConverter}">
+                                                <!--<Binding XPath="../@conceptsDir" />-->
+                                                <Binding Source="\Images\" />
+                                                <Binding XPath="@concept" />
+                                            </MultiBinding>
+                                        </Image.Source>
+                                    </Image>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Margin="0,0,8,0"
+                                               Style="{StaticResource imageTitleListBoxStyle}" Text="Concept:" />
+
+                                    <TextBlock Name="imagePathTextBlock" Grid.Row="0" Grid.Column="2"
+                                                Style="{StaticResource imageTextTitleListBoxStyle}" Text="{Binding XPath=@concept}">
+                                    </TextBlock>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,0,8,0"
+                                               Style="{StaticResource imageListBoxStyle}" Text="Confidence:" />
+
+                                    <TextBox Name="ConfidenceTextBlock" Grid.Row="1" Grid.Column="2"
+                                                Text="{Binding XPath=probability}"
+                                                Style="{StaticResource imageConfidenceTextBoxStyle}" KeyDown="OnKeyDownHandler" TextChanged="textBox_TextChanged" />
+                                    <!---->
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,0,8,0"
+                                               Style="{StaticResource imageListBoxStyle}" Text="Binary Score:" />
+
+                                    <TextBlock Name="BinaryTextBlock" Grid.Row="2" Grid.Column="2"
+                                                Text="{Binding XPath=binary}"
+                                                Style="{StaticResource imageTextListBoxStyle}" />
+
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,0,8,0"
+                                               Style="{StaticResource imageListBoxStyle}" Text="Rank:" />
+
+                                    <TextBlock Name="RankTextBlock" Grid.Row="3" Grid.Column="2"
+                                                Text="{Binding XPath=@rank}"
+                                                Style="{StaticResource imageTextListBoxStyle}" />
+
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+
+                        <!-- ControlTemplate for up, down listbox buttons -->
+                        <ControlTemplate x:Key="ListBoxTemplate" TargetType="{x:Type ListBox}">
+
+                            <DockPanel>
+                                <RepeatButton x:Name="LineUpButton" DockPanel.Dock="Top" 
+                                              Style="{StaticResource ChromeButtonStyle}"
+                                              FontFamily="Webdings"
+                                              FontSize="18"
+                                              Foreground="#FF919191"
+                                              Content="5" 
+                                              Width="60"
+                                              ClickMode="Hover"
+                                              ToolTip="Up"
+                                              Command="{x:Static ScrollBar.LineUpCommand}"      
+                                              CommandTarget="{Binding ElementName=scrollviewer}">
+                                </RepeatButton>
+
+                                <RepeatButton x:Name="LineDownButton" DockPanel.Dock="Bottom"
+                                              Style="{StaticResource ChromeButtonStyle}"
+                                              FontFamily="Webdings"
+                                              FontSize="18"
+                                              Foreground="#FF919191"
+                                              Content="6"
+                                              Width="60"
+                                              ClickMode="Hover"
+                                              ToolTip="Down"
+                                              Command="{x:Static ScrollBar.LineDownCommand}"      
+                                              CommandTarget="{Binding ElementName=scrollviewer}" />
+                                <Border BorderThickness="0" BorderBrush="Gray" Background="Transparent">
+                                    <ScrollViewer x:Name="scrollviewer" MinWidth="1000">
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Border>
+                            </DockPanel>
+
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="Button.IsMouseOver" Value="True">
+                                    <Setter TargetName="LineUpButton" Property="Foreground" Value="RoyalBlue"/>
+                                </Trigger>
+                                <Trigger Property="Button.IsMouseOver" Value="True">
+                                    <Setter TargetName="LineDownButton" Property="Foreground" Value="RoyalBlue"/>
+                                </Trigger>
+
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+
+                        <CollectionViewSource x:Key="SortedPredictions" Source="{Binding XPath=./predictions/prediction}">
+                            <CollectionViewSource.SortDescriptions>
+                                <scm:SortDescription PropertyName="probability"  Direction="Descending" />
+                            </CollectionViewSource.SortDescriptions>
+                        </CollectionViewSource>
+
+                    </TabControl.Resources>
+
+                    <TabItem Header="Images" x:Name="ImagesTabItem">
+                        <DockPanel>
+                            <Grid DockPanel.Dock="Bottom">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <Button x:Name="AddButton" Grid.Column="0"
+                                                ToolTip="Add image"
+                                                Style="{StaticResource ChromeButtonStyle}"
+                                                 Click="AddButton_Click">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock FontFamily="Wingdings 2"
+                                                       FontSize="20"
+                                                       Foreground="RoyalBlue"
+                                                       Text="Ì" />
+                                            <!--<TextBlock Text="Add" Foreground="RoyalBlue" Margin="1,2,0,0" />-->
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+                                <Button x:Name="AddFolderButton" Grid.Column="1" 
+                                                ToolTip="Add images folder"
+                                                Style="{StaticResource ChromeButtonStyle}"
+                                                FontFamily="Wingdings 3"
+                                                FontSize="20"
+                                                Foreground="RoyalBlue"
+                                                Content="Ì" Click="AddFolderButton_Click">
+                                </Button>
+                                <Button x:Name="AddSubmissionFileButton" Grid.Column="2" 
+                                                ToolTip="Add submission file"
+                                                Style="{StaticResource ChromeButtonStyle}"
+                                                FontFamily="Wingdings 2"
+                                                FontSize="20"
+                                                Foreground="RoyalBlue"
+                                                Content="2" Click="AddSubmissionFileButton_Click">
+                                </Button>
+                                <Button x:Name="ClearButton" Grid.Column="3" 
+                                                ToolTip="Clear list of images"
+                                                Style="{StaticResource ChromeButtonStyle}"
+                                                FontFamily="Wingdings 2"
+                                                FontSize="20"
+                                                Foreground="RoyalBlue"
+                                                Content="Ó" Click="ClearButton_Click">
+                                </Button>
+                                
+                            </Grid>
+
+                            <ListBox ItemsSource="{Binding}"
+                                 Name="imagesListBox"
+                                 Template="{StaticResource ListBoxTemplate}"
+                                 ItemTemplate="{StaticResource imageItemTemplate}"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                                 ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                                 IsSynchronizedWithCurrentItem="True"
+                                 Visibility="Visible" SelectionMode="Single"
+                                 Foreground="RoyalBlue" Background="#FF2991BE" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" >
+                            </ListBox>
+                        </DockPanel>
+                    </TabItem>
+
+                    <TabItem Header="Prediction" x:Name="predictionTabItem">
+                        <DockPanel Margin="5" Grid.Column="0">
+                            <Grid DockPanel.Dock="Bottom">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Server address:" Style="{Binding imageListBoxStyle}"/>
+                                    <TextBox x:Name="serverAdressTextBox" Style="{StaticResource imageConfidenceTextBoxStyle}" Text="127.0.0.1"></TextBox>
+                                </StackPanel>
+                                <Button x:Name="postAnnotationsImageButton"
+                                        Grid.Column="1"
+                                        Style="{StaticResource ChromeButtonStyle}"
+                                        FontSize="12"
+                                        Foreground="RoyalBlue"
+                                        ToolTip="Submit manual annotations to server" Click="PostAnnotationsButton_Click" >
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock FontSize="23"
+                                                   Foreground="DarkGray"
+                                                   FontFamily="Webdings" Text="Ò">
+                                            </TextBlock>
+                                            <TextBlock FontSize="12"
+                                                   Margin="0,4,0,0"
+                                                   Foreground="RoyalBlue"
+                                                   Text="Submit" />
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+                            </Grid>
+                            
+                            
+                            <!-- Actual list of predictions -->
+
+                            <!--ItemsSource="{Binding XPath=./predictions/prediction}"-->
+                            <ListBox 
+                                ToolTip="Search a concept by typing"
+                                IsTextSearchEnabled="True" 
+                                TextSearch.TextPath="@concept"
+                                DataContext="{Binding SelectedItem, ElementName=imagesListBox}"
+                                ItemsSource="{Binding Source={StaticResource SortedPredictions}}" 
+                             Name="predictionsListBox"
+                             Template="{StaticResource ListBoxTemplate}"
+                             ItemTemplate="{StaticResource predictionItemTemplate}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                             ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                             IsSynchronizedWithCurrentItem="True"
+                             Visibility="Visible" SelectionMode="Single"
+                             Foreground="RoyalBlue" Background="#FF2991BE" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" >
+                            </ListBox>
+
+                        </DockPanel>
+                    </TabItem>
+                    
+                    
+                </TabControl>
+
+                <Grid Grid.Column="1">
+                        <DockPanel>
+                        <Grid DockPanel.Dock="Bottom" Margin="5">
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <!--<Button x:Name="OpenImageButton"
+                                    Style="{StaticResource ChromeButtonStyle}"
+                                    FontFamily="Wingdings"
+                                    FontSize="18"
+                                    Foreground="RoyalBlue"
+                                    Content="1"
+                                    ToolTip="Open image" Click="OpenImageButton_Click" />-->
+                            
+                            <Button x:Name="ProcessImageButton"
+                                    Grid.Column="0"
+                                    Grid.Row="1"
+                                    Style="{StaticResource ChromeButtonStyle}"
+                                    FontSize="12"
+                                    Foreground="RoyalBlue"
+                                    ToolTip="Process selected image" Click="ProcessImageButton_Click">
+                                <Button.Content>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontSize="23"
+                                                   Foreground="DarkGray"
+                                                   FontFamily="Webdings" Text="µ">
+                                        </TextBlock>
+                                        <TextBlock FontSize="12"
+                                                   Margin="0,4,0,0"
+                                                   Foreground="RoyalBlue"
+                                                   Text="Process" />
+                                    </StackPanel>
+                                </Button.Content>
+                            </Button>
+
+                            <Button x:Name="FaceDetectionButton"
+                                    Grid.Column="1"
+                                    Grid.Row="1"
+                                    Style="{StaticResource ChromeButtonStyle}"
+                                    ToolTip="Process selected image" Click="FaceDetectionButtonButton_Click">
+                                <Button.Content>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontSize="23"
+                                                   Foreground="DarkGray"
+                                                   FontFamily="Webdings" Text="">
+                                        </TextBlock>
+                                        <TextBlock FontSize="12"
+                                                   Margin="0,4,0,0"
+                                                   Foreground="RoyalBlue"
+                                                   Text="Detect faces" />
+                                    </StackPanel>
+                                </Button.Content>
+                            </Button>
+                            <Button x:Name="VisualizeButton"
+                                    Grid.Column="2"
+                                    Grid.Row="1"
+                                    Style="{StaticResource ChromeButtonStyle}"
+                                    FontSize="12"
+                                    Foreground="RoyalBlue"
+                                    ToolTip="Visualize TopSurf descriptor" Click="VisualizeButtonButton_Click" >
+                                <Button.Content>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock FontSize="23"
+                                                   Foreground="DarkGray"
+                                                   FontFamily="Webdings" Text="¸">
+                                        </TextBlock>
+                                        <TextBlock FontSize="12"
+                                                   Margin="0,4,0,0"
+                                                   Foreground="RoyalBlue"
+                                                   Text="Visualize" />
+                                    </StackPanel>
+                                </Button.Content>
+                            </Button>
+                            <TextBlock Margin="4"
+                                       Grid.Column="0"
+                                       Grid.ColumnSpan="4"
+                                       x:Name="responseTextBlock"
+                                       Style="{StaticResource imageListBoxStyle}">
+                                <TextBlock.Triggers>
+                                    <EventTrigger SourceName="responseTextBlock" RoutedEvent="TextBoxBase.TextChanged">
+                                        <BeginStoryboard Name="beginPlayStoryboard">
+                                            <Storyboard Name="playStoryboard">
+                                                <DoubleAnimation Storyboard.TargetName="responseTextBlock" 
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     From="1.0" To="0.0" Duration="0:0:7" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </TextBlock.Triggers>
+                            </TextBlock>
+                        </Grid>
+
+                        <DockPanel>
+                            <TextBlock Margin="5" ToolTip="User tags" DockPanel.Dock="Bottom" Foreground="RoyalBlue" FontSize="10" TextWrapping="Wrap" Text="{Binding XPath=tags}">
+                            </TextBlock>
+                            <Image x:Name="displayImage" Source="{Binding XPath=path}" Margin="10" />
+                        </DockPanel>
+                     </DockPanel>
+                </Grid>
+            </Grid>
+            <Border
+                x:Name="m_roundBorder"
+                x:FieldModifier="private"
+                BorderThickness="1"
+                BorderBrush="LightSkyBlue"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch">
+
+            </Border>
+            <Rectangle
+                Stroke="{x:Null}"
+                VerticalAlignment="Top"
+                Height="7"
+                x:Name="top"
+                PreviewMouseDown="HandleRectanglePreviewMouseDown"
+                MouseMove="HandleRectangleMouseMove"
+                Margin="8,0,8,0"
+                Fill="#00000000" />
+            <Rectangle
+                Stroke="{x:Null}"
+                x:Name="bottom"
+                Height="7"
+                VerticalAlignment="Bottom"
+                PreviewMouseDown="HandleRectanglePreviewMouseDown"
+                MouseMove="HandleRectangleMouseMove"
+                Margin="8,0,8,0"
+                Fill="#00000000" />
+            <Rectangle
+                Stroke="{x:Null}"
+                HorizontalAlignment="Left"
+                Margin="0,7,0,7"
+                Width="8"
+                x:Name="left"
+                PreviewMouseDown="HandleRectanglePreviewMouseDown"
+                MouseMove="HandleRectangleMouseMove"
+                Fill="#00000000" />
+            <Rectangle
+                Stroke="{x:Null}"
+                Margin="0,7,0,7"
+                Width="8"
+                HorizontalAlignment="Right"
+                x:Name="right"
+                PreviewMouseDown="HandleRectanglePreviewMouseDown"
+                MouseMove="HandleRectangleMouseMove"
+                Fill="#00000000" />
+            <Rectangle
+                Stroke="{x:Null}"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Bottom"
+                Width="8"
+                Height="7"
+                x:Name="bottomLeft"
+                PreviewMouseDown="HandleRectanglePreviewMouseDown"
+                MouseMove="HandleRectangleMouseMove"
+                Fill="#00000000" />
+            <Rectangle
+                Stroke="{x:Null}"
+                VerticalAlignment="Bottom"
+                Height="7"
+                Width="8"
+                HorizontalAlignment="Right"
+                x:Name="bottomRight"
+                PreviewMouseDown="HandleRectanglePreviewMouseDown"
+                MouseMove="HandleRectangleMouseMove"
+                Fill="#00000000" />
+            <Rectangle
+                Stroke="{x:Null}"
+                HorizontalAlignment="Right"
+                Width="8"
+                Height="7"
+                VerticalAlignment="Top"
+                x:Name="topRight"
+                PreviewMouseDown="HandleRectanglePreviewMouseDown"
+                MouseMove="HandleRectangleMouseMove"
+                Fill="#00000000" />
+            <Rectangle
+                Stroke="{x:Null}"
+                HorizontalAlignment="Left"
+                Width="8"
+                VerticalAlignment="Top"
+                Height="7"
+                x:Name="topLeft"
+                PreviewMouseLeftButtonDown="HandleRectanglePreviewMouseDown"
+                MouseMove="HandleRectangleMouseMove"
+                Fill="#00000000" />
+            <Path
+                x:Name="m_resize"
+                x:FieldModifier="private"
+                Data="M9.5390625,2.4619789 L9.5390625,11.133854 L0.8671875,11.133854 z"
+                HorizontalAlignment="Right"
+                Height="8.672"
+                Margin="0,0,1,1"
+                RenderTransformOrigin="0.5,0.5"
+                Stretch="Fill"
+                VerticalAlignment="Bottom"
+                Width="8.672"
+                StrokeDashArray="0.5 1"
+                StrokeDashOffset="2"
+                Fill="DarkGray"
+                IsHitTestVisible="False"
+                IsEnabled="False"
+                StrokeThickness="0">
+                <Path.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform />
+                        <SkewTransform />
+                        <RotateTransform />
+                        <TranslateTransform />
+                    </TransformGroup>
+                </Path.RenderTransform>
+            </Path>
+        </Grid>
+    </Grid>
+</Window>
